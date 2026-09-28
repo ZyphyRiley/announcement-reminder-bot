@@ -1,1 +1,1 @@
-### Announcement Reminder Discord Bot
+# Announcement Reminder Discord Bot
