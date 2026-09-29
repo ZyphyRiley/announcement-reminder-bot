@@ -80,6 +80,7 @@ async def reminder(
         "_id": random.random(),
         "content": content,
         "send_time": reminder_time.astimezone(ZoneInfo("Canada/Pacific")),
+        "deadline": deadline_dt,
         "channel": str(channel), # gets rid of the hashtag before
         "role": str(role), # keeps the @ sign
         "guild_id": interaction.guild_id,
@@ -117,14 +118,26 @@ async def send_reminder(reminder):
     guild = bot.get_guild(reminder['guild_id'])
 
     channel = discord.utils.get(guild.channels, name=reminder['channel'])
+
+    if not guild.emojis:
+        emoji1 = "🔔"
+        emoji2 = "🔔"
+    else:
+        emoji1 = random.choice(guild.emojis)
+        emoji2 = random.choice(guild.emojis)
+
+    formatted_dl = reminder['deadline'].strftime("%b %d, %I:%M %p")
+
+    message = f"# **🔔{emoji1} REMINDER {emoji2}🔔**\n"
     
-    message = f"{reminder['role']}: {reminder['content']}"
+    message += f"###{reminder['role']}: {reminder['content']}\n"
+    message += f"## **Deadline: {formatted_dl}\n"
     # @everyone: Ain't Nobody homework, bar 59-61
     # 
     # google.drive.com
 
     if reminder.get('link'):
-        message += f"\nLink: {reminder['link']}"
+        message += f"### Link: {reminder['link']}"
 
     await channel.send(message)
 
