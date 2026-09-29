@@ -2,6 +2,7 @@
 import os
 from dotenv import load_dotenv
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 import random
 
 import discord
@@ -70,7 +71,7 @@ async def reminder(
 
     except ValueError:
         await interaction.response.send_message(
-            "Invalid deadline or time before reminder format.",
+            "Invalid deadline or time before reminder.",
             ephemeral=True
         )
         return
@@ -78,9 +79,10 @@ async def reminder(
     result = {
         "_id": random.random(),
         "content": content,
-        "send_time": reminder_time,
+        "send_time": reminder_time.astimezone(ZoneInfo("Canada/Pacific")),
         "channel": str(channel), # gets rid of the hashtag before
         "role": str(role), # keeps the @ sign
+        "guild_id": interaction.guild_id,
         "sent": False
     }
 
@@ -101,47 +103,59 @@ async def reminder(
     )
 
 async def send_reminder(reminder):
+        
+    # "_id": random.random(),
+    # "content": content,
+    # "send_time": reminder_time,
+    # "channel": str(channel)
+    # "role": str(role)
+    # "guild_id": interaction.guild_id
+    # "sent": False
+    
 
-    #channel: discord.TextChannel,
-        # content: str,
-        # reminder_time: datetime,
-        # role: discord.Role,
-        # link: str | None
+    print("Sending reminder!")
+    guild = bot.get_guild(reminder['guild_id'])
 
-    channel: discord.TextChannel = reminder['channel']
+    channel = discord.utils.get(guild.channels, name=reminder['channel'])
     
     message = f"{reminder['role']}: {reminder['content']}"
+    # @everyone: Ain't Nobody homework, bar 59-61
+    # 
+    # google.drive.com
 
     if reminder.get('link'):
         message += f"\nLink: {reminder['link']}"
 
     await channel.send(message)
 
-    await collection.update_one(
+    collection.update_one(
         {"_id": reminder["_id"]},
         {"$set": {"sent": True}}
     )
 
 @tasks.loop(seconds=10)
 async def reminder_scheduler():
-    now = datetime.now(timezone.utc)
+    now = datetime.now(ZoneInfo("Canada/Pacific"))
 
     cursor = collection.find({
-        "reminder_time": {"$lte": now},
+        "send_time": {"$lte": now},
         "sent": False
     })
 
-    async for reminder in cursor:
+    for reminder in cursor:
         try:
+            print(f"Current time is {now}")
             await send_reminder(reminder)
 
         except Exception as e:
-            print("Failed to send reminder: {e}")
+            print(f"Failed to send reminder: {e}")
 
 @bot.event
 async def on_ready():
     if not reminder_scheduler.is_running():
         reminder_scheduler.start()
     print(f"{bot.user.name} has successfully started")
+    now = datetime.now(ZoneInfo("Canada/Pacific"))
+    print(f"Current time is {now}")
 
 bot.run(TOKEN)
