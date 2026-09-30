@@ -130,8 +130,8 @@ async def send_reminder(reminder):
 
     message = f"# **🔔{emoji1} REMINDER {emoji2}🔔**\n"
     
-    message += f"###{reminder['role']}: {reminder['content']}\n"
-    message += f"## **Deadline: {formatted_dl}\n"
+    message += f"### {reminder['role']}: {reminder['content']}\n"
+    message += f"## Deadline: {formatted_dl}\n"
     # @everyone: Ain't Nobody homework, bar 59-61
     # 
     # google.drive.com
